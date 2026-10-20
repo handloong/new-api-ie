@@ -195,6 +195,17 @@ export type AuthSettings = {
   TurnstileCheckEnabled: boolean
   TurnstileSiteKey: string
   TurnstileSecretKey: string
+  LdapEnabled: boolean
+  LdapServer: string
+  LdapPort: string
+  LdapUseTls: boolean
+  LdapBindDn: string
+  LdapBindPassword: string
+  LdapBaseDn: string
+  LdapUserFilter: string
+  LdapAttrDisplayName: string
+  LdapAutoRegister: boolean
+  LdapAutoRegisterPlanId: string
   'passkey.enabled': boolean
   'passkey.rp_display_name': string
   'passkey.rp_id': string

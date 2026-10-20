@@ -21,6 +21,7 @@ import { createSectionRegistry } from '../utils/section-registry'
 import { BasicAuthSection } from './basic-auth-section'
 import { BotProtectionSection } from './bot-protection-section'
 import { CustomOAuthSection } from './custom-oauth/custom-oauth-section'
+import { LdapSection } from './ldap-section'
 import { OAuthSection } from './oauth-section'
 import { PasskeySection } from './passkey-section'
 
@@ -120,6 +121,27 @@ const AUTH_SECTIONS = [
     titleKey: 'Custom OAuth',
     build: (settings: AuthSettings) => (
       <CustomOAuthSection serverAddress={settings.ServerAddress} />
+    ),
+  },
+  {
+    id: 'ldap',
+    titleKey: 'LDAP Directory',
+    build: (settings: AuthSettings) => (
+      <LdapSection
+        defaultValues={{
+          LdapEnabled: settings.LdapEnabled,
+          LdapServer: settings.LdapServer,
+          LdapPort: settings.LdapPort,
+          LdapUseTls: settings.LdapUseTls,
+          LdapBindDn: settings.LdapBindDn,
+          LdapBindPassword: settings.LdapBindPassword,
+          LdapBaseDn: settings.LdapBaseDn,
+          LdapUserFilter: settings.LdapUserFilter,
+          LdapAttrDisplayName: settings.LdapAttrDisplayName,
+          LdapAutoRegister: settings.LdapAutoRegister,
+          LdapAutoRegisterPlanId: settings.LdapAutoRegisterPlanId,
+        }}
+      />
     ),
   },
 ] as const
