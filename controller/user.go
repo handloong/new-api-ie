@@ -1315,6 +1315,73 @@ func TopUp(c *gin.Context) {
 	})
 }
 
+// TopUpByToken 供客户端用 API 令牌兑换兑换码：身份取自令牌所属用户，不依赖浏览器会话。
+// POST /api/user/topup-by-token
+//
+// 返回结构与 /api/user/topup 对齐，额外给出折算金额与兑换后余额，客户端无需再除
+// QuotaPerUnit。兑换码的失败原因对调用方保持统一，避免据此探测兑换码状态。
+func TopUpByToken(c *gin.Context) {
+	id := c.GetInt("id")
+	if id == 0 {
+		topUpByTokenFail(c, "无法从令牌识别用户")
+		return
+	}
+	if !operation_setting.IsPaymentComplianceConfirmed() {
+		topUpByTokenFail(c, "兑换功能尚未启用，请联系管理员")
+		return
+	}
+
+	lock := getTopUpLock(id)
+	if !lock.TryLock() {
+		topUpByTokenFail(c, "上一次兑换仍在处理，请稍后再试")
+		return
+	}
+	defer lock.Unlock()
+
+	var req topUpRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		topUpByTokenFail(c, "参数格式错误")
+		return
+	}
+	key := strings.TrimSpace(req.Key)
+	if key == "" {
+		topUpByTokenFail(c, "兑换码不能为空")
+		return
+	}
+
+	quota, err := model.Redeem(key, id)
+	if err != nil {
+		logger.LogError(c, common.LogText("failed to redeem key for user %d via token: %s", id, err.Error()))
+		topUpByTokenFail(c, "兑换失败，兑换码可能无效、已使用或已过期")
+		return
+	}
+
+	remainQuota, quotaErr := model.GetUserQuota(id, false)
+	if quotaErr != nil {
+		common.SysLog(common.LogText("failed to read quota for user %d after token top-up: %s", id, quotaErr.Error()))
+		remainQuota = 0
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data": gin.H{
+			"quota":        quota,
+			"usd":          quotaToDisplayAmount(int64(quota)),
+			"remain_quota": remainQuota,
+			"remain_usd":   quotaToDisplayAmount(int64(remainQuota)),
+		},
+	})
+}
+
+func topUpByTokenFail(c *gin.Context, message string) {
+	c.JSON(http.StatusOK, gin.H{
+		"success": false,
+		"message": message,
+		"data":    nil,
+	})
+}
+
 type UpdateUserSettingRequest struct {
 	QuotaWarningType                 string  `json:"notify_type"`
 	QuotaWarningThreshold            float64 `json:"quota_warning_threshold"`

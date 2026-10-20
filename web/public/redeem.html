@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>额度兑换</title>
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1f2329;
+    --muted: #6b7280;
+    --border: #dcdfe6;
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --ok: #16a34a;
+    --ok-bg: #f0fdf4;
+    --err: #dc2626;
+    --err-bg: #fef2f2;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card);
+    border-radius: 16px;
+    padding: 32px 28px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 12px 32px rgba(16, 24, 40, .06);
+  }
+  h1 { margin: 0 0 6px; font-size: 22px; font-weight: 600; letter-spacing: .01em; }
+  .sub { margin: 0 0 24px; color: var(--muted); font-size: 13px; }
+  label { display: block; margin-bottom: 16px; }
+  .label-text { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 500; color: #374151; }
+  input {
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .12);
+  }
+  input:disabled { background: #f9fafb; color: var(--muted); }
+  button {
+    width: 100%;
+    height: 44px;
+    margin-top: 8px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  button:hover:not(:disabled) { background: var(--primary-dark); }
+  button:disabled { opacity: .6; cursor: not-allowed; }
+  .result { margin-top: 20px; padding: 16px; border-radius: 10px; font-size: 13px; display: none; }
+  .result.show { display: block; }
+  .result.ok { background: var(--ok-bg); border: 1px solid #bbf7d0; color: #14532d; }
+  .result.err { background: var(--err-bg); border: 1px solid #fecaca; color: #7f1d1d; }
+  .result-title { font-weight: 600; margin-bottom: 8px; }
+  .result.ok .result-title { color: var(--ok); }
+  .result.err .result-title { color: var(--err); }
+  .rows { display: grid; gap: 6px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; }
+  .row span:last-child { font-variant-numeric: tabular-nums; font-weight: 500; }
+  .foot { margin-top: 20px; text-align: center; color: #9ca3af; font-size: 12px; }
+</style>
+</head>
+<body>
+<main class="card">
+  <h1>额度兑换</h1>
+  <p class="sub">使用企业账号验证身份，兑换码的额度将充值到该账号。</p>
+
+  <form id="form" novalidate>
+    <label>
+      <span class="label-text">企业账号</span>
+      <input id="username" name="username" type="text" autocomplete="username"
+             placeholder="请输入 LDAP 账号" spellcheck="false" required>
+    </label>
+    <label>
+      <span class="label-text">密码</span>
+      <input id="password" name="password" type="password" autocomplete="current-password"
+             placeholder="请输入 LDAP 密码" required>
+    </label>
+    <label>
+      <span class="label-text">兑换码</span>
+      <input id="key" name="key" type="text" autocomplete="off"
+             placeholder="请输入兑换码" spellcheck="false" required>
+    </label>
+    <button id="submit" type="submit">立即兑换</button>
+  </form>
+
+  <div id="result" class="result" role="status" aria-live="polite"></div>
+  <p class="foot">兑换成功即生效，兑换码仅可使用一次。</p>
+</main>
+
+<script>
+(function () {
+  var form = document.getElementById('form');
+  var submitBtn = document.getElementById('submit');
+  var resultBox = document.getElementById('result');
+  var usernameEl = document.getElementById('username');
+  var passwordEl = document.getElementById('password');
+  var keyEl = document.getElementById('key');
+
+  var displayType = 'USD';
+
+  // 展示单位跟随站点设置，取不到时按美元显示。
+  fetch('/api/status')
+    .then(function (r) { return r.json(); })
+    .then(function (res) {
+      var type = res && res.data && res.data.quota_display_type;
+      if (type) displayType = String(type).toUpperCase();
+    })
+    .catch(function () {});
+
+  function formatAmount(value) {
+    var n = Number(value);
+    if (!isFinite(n)) return '-';
+    if (displayType === 'CNY') return '¥' + n.toFixed(2);
+    if (displayType === 'TOKENS') return n.toLocaleString('zh-CN') + ' tokens';
+    return '$' + n.toFixed(2);
+  }
+
+  function showError(message) {
+    resultBox.className = 'result err show';
+    resultBox.innerHTML = '';
+    var title = document.createElement('div');
+    title.className = 'result-title';
+    title.textContent = '兑换失败';
+    var body = document.createElement('div');
+    body.textContent = message || '请稍后重试';
+    resultBox.appendChild(title);
+    resultBox.appendChild(body);
+  }
+
+  function showSuccess(data) {
+    resultBox.className = 'result ok show';
+    resultBox.innerHTML = '';
+    var title = document.createElement('div');
+    title.className = 'result-title';
+    title.textContent = '兑换成功';
+
+    var rows = document.createElement('div');
+    rows.className = 'rows';
+    [
+      ['本次充值', formatAmount(data.redeemed_usd)],
+      ['当前余额', formatAmount(data.remain_usd)]
+    ].forEach(function (pair) {
+      var row = document.createElement('div');
+      row.className = 'row';
+      var k = document.createElement('span');
+      k.textContent = pair[0];
+      var v = document.createElement('span');
+      v.textContent = pair[1];
+      row.appendChild(k);
+      row.appendChild(v);
+      rows.appendChild(row);
+    });
+
+    resultBox.appendChild(title);
+    resultBox.appendChild(rows);
+  }
+
+  function setBusy(busy) {
+    submitBtn.disabled = busy;
+    submitBtn.textContent = busy ? '兑换中…' : '立即兑换';
+    [usernameEl, passwordEl, keyEl].forEach(function (el) { el.disabled = busy; });
+  }
+
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (submitBtn.disabled) return;
+
+    var username = usernameEl.value.trim();
+    var password = passwordEl.value;
+    var key = keyEl.value.trim();
+
+    if (!username || !password || !key) {
+      showError('账号、密码、兑换码都不能为空');
+      return;
+    }
+
+    setBusy(true);
+    resultBox.className = 'result';
+    resultBox.innerHTML = '';
+
+    fetch('/api/user/ldap-redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: username, password: password, key: key })
+    })
+      .then(function (res) {
+        return res.json().catch(function () {
+          throw new Error('服务返回异常（HTTP ' + res.status + '）');
+        });
+      })
+      .then(function (data) {
+        if (data && data.success) {
+          showSuccess(data.data || {});
+          keyEl.value = '';
+          passwordEl.value = '';
+          keyEl.focus();
+        } else {
+          showError(data && data.message ? data.message : '兑换失败，请稍后重试');
+        }
+      })
+      .catch(function (err) {
+        showError(err && err.message ? err.message : '网络异常，请检查连接后重试');
+      })
+      .then(function () {
+        setBusy(false);
+      });
+  });
+})();
+</script>
+</body>
+</html>

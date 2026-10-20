@@ -81,6 +81,10 @@ func SetApiRouter(router *gin.Engine) {
 			userRoute.POST("/login", middleware.CriticalRateLimit(), middleware.DisableCache(), anonymousRequestBodyLimit, middleware.TurnstileCheck(), controller.Login)
 			// Directory credentials exchanged for a fixed API token; no session is created.
 			userRoute.POST("/ldap-login-return-token", middleware.CriticalRateLimit(), middleware.DisableCache(), anonymousRequestBodyLimit, controller.LdapLoginReturnToken)
+			// 独立兑换页：目录认证 + 兑换码核销合并为一次请求，不创建会话也不签发令牌。
+			userRoute.POST("/ldap-redeem", middleware.CriticalRateLimit(), middleware.DisableCache(), anonymousRequestBodyLimit, controller.LdapRedeem)
+			// 客户端用 API 令牌兑换：身份取自令牌所属用户，返回额度与折算金额。
+			userRoute.POST("/topup-by-token", middleware.CriticalRateLimit(), anonymousRequestBodyLimit, middleware.TokenAuth(), controller.TopUpByToken)
 			userRoute.POST("/login/2fa", middleware.CriticalRateLimit(), middleware.DisableCache(), anonymousRequestBodyLimit, controller.Verify2FALogin)
 			userRoute.POST("/login/verify", middleware.CriticalRateLimit(), middleware.DisableCache(), anonymousRequestBodyLimit, controller.VerifyLogin)
 			userRoute.POST("/login/passkey/begin", middleware.CriticalRateLimit(), middleware.DisableCache(), anonymousRequestBodyLimit, controller.LoginPasskeyBegin)
