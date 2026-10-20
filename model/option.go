@@ -136,6 +136,17 @@ func InitOptionMap() {
 	common.OptionMap["PayMethods"] = operation_setting.PayMethods2JsonString()
 	common.OptionMap["GitHubClientId"] = ""
 	common.OptionMap["GitHubClientSecret"] = ""
+	common.OptionMap["LdapEnabled"] = strconv.FormatBool(common.LdapEnabled)
+	common.OptionMap["LdapServer"] = common.LdapServer
+	common.OptionMap["LdapPort"] = strconv.Itoa(common.LdapPort)
+	common.OptionMap["LdapUseTls"] = strconv.FormatBool(common.LdapUseTls)
+	common.OptionMap["LdapBindDn"] = common.LdapBindDn
+	common.OptionMap["LdapBindPassword"] = common.LdapBindPassword
+	common.OptionMap["LdapBaseDn"] = common.LdapBaseDn
+	common.OptionMap["LdapUserFilter"] = common.LdapUserFilter
+	common.OptionMap["LdapAttrDisplayName"] = common.LdapAttrDisplayName
+	common.OptionMap["LdapAutoRegister"] = strconv.FormatBool(common.LdapAutoRegister)
+	common.OptionMap["LdapAutoRegisterPlanId"] = strconv.Itoa(common.LdapAutoRegisterPlanId)
 	common.OptionMap["TelegramBotToken"] = ""
 	common.OptionMap["TelegramBotName"] = ""
 	common.OptionMap["WeChatServerAddress"] = ""
@@ -400,7 +411,10 @@ func updateOptionMap(key string, value string) (err error) {
 			common.ImageDownloadPermission = intValue
 		}
 	}
-	if strings.HasSuffix(key, "Enabled") || key == "DefaultCollapseSidebar" || key == "DefaultUseAutoGroup" || key == "SMTPForceAuthLogin" || key == "SMTPInsecureSkipVerify" {
+	// Boolean switches that do not end with "Enabled" must be listed explicitly,
+	// otherwise the whole switch below is skipped and the value is stored in the
+	// database but never applied to the in-memory flags.
+	if strings.HasSuffix(key, "Enabled") || key == "DefaultCollapseSidebar" || key == "DefaultUseAutoGroup" || key == "SMTPForceAuthLogin" || key == "SMTPInsecureSkipVerify" || key == "LdapAutoRegister" || key == "LdapUseTls" {
 		boolValue := value == "true"
 		switch key {
 		case "PasswordRegisterEnabled":
@@ -411,6 +425,12 @@ func updateOptionMap(key string, value string) (err error) {
 			common.EmailVerificationEnabled = boolValue
 		case "GitHubOAuthEnabled":
 			common.GitHubOAuthEnabled = boolValue
+		case "LdapEnabled":
+			common.LdapEnabled = boolValue
+		case "LdapUseTls":
+			common.LdapUseTls = boolValue
+		case "LdapAutoRegister":
+			common.LdapAutoRegister = boolValue
 		case "LinuxDOOAuthEnabled":
 			common.LinuxDOOAuthEnabled = boolValue
 		case "WeChatAuthEnabled":
@@ -609,6 +629,22 @@ func updateOptionMap(key string, value string) (err error) {
 		common.GitHubClientId = value
 	case "GitHubClientSecret":
 		common.GitHubClientSecret = value
+	case "LdapServer":
+		common.LdapServer = value
+	case "LdapPort":
+		common.LdapPort, _ = strconv.Atoi(value)
+	case "LdapBindDn":
+		common.LdapBindDn = value
+	case "LdapBindPassword":
+		common.LdapBindPassword = value
+	case "LdapBaseDn":
+		common.LdapBaseDn = value
+	case "LdapUserFilter":
+		common.LdapUserFilter = value
+	case "LdapAttrDisplayName":
+		common.LdapAttrDisplayName = value
+	case "LdapAutoRegisterPlanId":
+		common.LdapAutoRegisterPlanId, _ = strconv.Atoi(value)
 	case "LinuxDOClientId":
 		common.LinuxDOClientId = value
 	case "LinuxDOClientSecret":

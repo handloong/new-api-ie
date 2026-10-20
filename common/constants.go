@@ -70,6 +70,23 @@ var PasswordRegisterEnabled = true
 var EmailVerificationEnabled = false
 var GitHubOAuthEnabled = false
 var LinuxDOOAuthEnabled = false
+
+// LDAP 目录服务凭证换令牌（不开放 Web 控制台登录）
+// LDAP directory credentials exchanged for an API token; no web console login.
+var LdapEnabled = false
+var LdapServer = ""
+var LdapPort = 389
+var LdapUseTls = false
+var LdapBindDn = ""
+var LdapBindPassword = ""
+var LdapBaseDn = ""
+var LdapUserFilter = "(&(objectClass=user)(sAMAccountName={0}))"
+var LdapAttrDisplayName = "displayName"
+var LdapAutoRegister = false
+// LdapAutoRegisterPlanId 自动注册时绑定的套餐 ID，0 表示不绑套餐、沿用 QuotaForNewUser。
+// Subscription plan bound on auto-registration; 0 keeps the legacy QuotaForNewUser behaviour.
+var LdapAutoRegisterPlanId = 0
+
 var WeChatAuthEnabled = false
 var TelegramOAuthEnabled = false
 var TurnstileCheckEnabled = false
