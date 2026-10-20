@@ -287,6 +287,9 @@ func GetTokenUsage(c *gin.Context) {
 			"total_available": userQuota,
 			"total_used":      userUsedQuota,
 		}
+		// Subscription quota is consumed before the wallet, so a client reading only
+		// user_quota sees zero while the account still has plan quota left.
+		data["subscriptions"] = buildTokenUsageSubscriptions(token.UserId)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -294,6 +297,39 @@ func GetTokenUsage(c *gin.Context) {
 		"message": "ok",
 		"data":    data,
 	})
+}
+
+// buildTokenUsageSubscriptions lists the caller's active subscription quota for the
+// token usage endpoint. A lookup failure degrades to an empty list so that a
+// subscription problem never breaks a balance query.
+func buildTokenUsageSubscriptions(userId int) []gin.H {
+	summaries, err := model.GetAllActiveUserSubscriptions(userId)
+	if err != nil {
+		common.SysError(common.LogText("failed to list active subscriptions for user %d: %s", userId, err.Error()))
+		return []gin.H{}
+	}
+	result := make([]gin.H, 0, len(summaries))
+	for _, summary := range summaries {
+		sub := summary.Subscription
+		if sub == nil {
+			continue
+		}
+		item := gin.H{
+			"plan_id":          sub.PlanId,
+			"plan_title":       "",
+			"amount_total":     sub.AmountTotal,
+			"amount_used":      sub.AmountUsed,
+			"amount_available": sub.AmountTotal - sub.AmountUsed,
+			"start_time":       sub.StartTime,
+			"end_time":         sub.EndTime,
+			"status":           sub.Status,
+		}
+		if plan, planErr := model.GetSubscriptionPlanById(sub.PlanId); planErr == nil && plan != nil {
+			item["plan_title"] = plan.Title
+		}
+		result = append(result, item)
+	}
+	return result
 }
 
 func AddToken(c *gin.Context) {
