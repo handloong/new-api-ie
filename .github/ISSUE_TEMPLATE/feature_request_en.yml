@@ -1,8 +1,1 @@
-name: Blank issue
-description: Create a blank issue
-labels: []
-body:
-  - type: markdown
-    attributes:
-      value: |
-        Please describe your feature request here.
+# Deprecated: custom issue template removed. Blank issues are enabled via .github/ISSUE_TEMPLATE/config.yml.
