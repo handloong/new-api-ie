@@ -284,13 +284,19 @@ func GetTokenUsage(c *gin.Context) {
 			common.ApiErrorI18n(c, i18n.MsgTokenGetInfoFailed)
 			return
 		}
+		subscriptions, subscriptionAvailable := buildTokenUsageSubscriptions(token.UserId)
+		data["subscriptions"] = subscriptions
+		// user_quota 承载账号级额度：
+		//   total_available / total_used     钱包的原始 quota
+		//   wallet_available_usd             钱包剩余额度折成金额
+		//   total_available_usd              钱包 + 全部活跃订阅，口径比 wallet_available_usd 大
+		// 订阅先于钱包扣费，只看 wallet_available_usd 会以为没钱。
 		data["user_quota"] = gin.H{
-			"total_available": userQuota,
-			"total_used":      userUsedQuota,
+			"total_available":      userQuota,
+			"total_used":           userUsedQuota,
+			"wallet_available_usd": quotaToDisplayAmount(int64(userQuota)),
+			"total_available_usd":  quotaToDisplayAmount(int64(userQuota) + subscriptionAvailable),
 		}
-		// Subscription quota is consumed before the wallet, so a client reading only
-		// user_quota sees zero while the account still has plan quota left.
-		data["subscriptions"] = buildTokenUsageSubscriptions(token.UserId)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -301,21 +307,24 @@ func GetTokenUsage(c *gin.Context) {
 }
 
 // buildTokenUsageSubscriptions lists the caller's active subscription quota for the
-// token usage endpoint. A lookup failure degrades to an empty list so that a
-// subscription problem never breaks a balance query.
-func buildTokenUsageSubscriptions(userId int) []gin.H {
+// token usage endpoint, together with the total remaining quota across them. A lookup
+// failure degrades to an empty list so that a subscription problem never breaks a
+// balance query.
+func buildTokenUsageSubscriptions(userId int) ([]gin.H, int64) {
 	summaries, err := model.GetAllActiveUserSubscriptions(userId)
 	if err != nil {
 		common.SysError(common.LogText("failed to list active subscriptions for user %d: %s", userId, err.Error()))
-		return []gin.H{}
+		return []gin.H{}, 0
 	}
 	result := make([]gin.H, 0, len(summaries))
+	var availableTotal int64
 	for _, summary := range summaries {
 		sub := summary.Subscription
 		if sub == nil {
 			continue
 		}
 		available := sub.AmountTotal - sub.AmountUsed
+		availableTotal += available
 		// *_usd 字段是折算成站点展示口径的金额，客户端无需自行除 QuotaPerUnit 或乘汇率。
 		item := gin.H{
 			"plan_id":              sub.PlanId,
@@ -335,7 +344,7 @@ func buildTokenUsageSubscriptions(userId int) []gin.H {
 		}
 		result = append(result, item)
 	}
-	return result
+	return result, availableTotal
 }
 
 // quotaToDisplayAmount converts a quota value into the numeric amount of the site's
