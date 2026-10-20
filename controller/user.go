@@ -1366,10 +1366,8 @@ func TopUpByToken(c *gin.Context) {
 		"success": true,
 		"message": "",
 		"data": gin.H{
-			"quota":        quota,
-			"usd":          quotaToDisplayAmount(int64(quota)),
-			"remain_quota": remainQuota,
-			"remain_usd":   quotaToDisplayAmount(int64(remainQuota)),
+			"usd":        quotaToDisplayAmount(int64(quota)),
+			"remain_usd": quotaToDisplayAmount(int64(remainQuota)),
 		},
 	})
 }
