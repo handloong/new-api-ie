@@ -1,0 +1,92 @@
+# New-API + MySQL + Redis
+#
+# Usage:
+#   docker compose -f docker-compose.mysql.yml up -d
+#   docker compose -f docker-compose.mysql.yml logs -f new-api
+#   docker compose -f docker-compose.mysql.yml down
+#   docker compose -f docker-compose.mysql.yml down -v   # 同时删除 MySQL 数据卷
+#
+# ⚠️ 从 SQLite / PostgreSQL 切过来不会自动迁移数据，这是一个全新的空库。
+# ⚠️ 所有默认密码上线前必须修改，且要同时改 SQL_DSN、MYSQL_ROOT_PASSWORD 和 healthcheck 三处。
+#
+# MySQL 端口默认不映射到宿主机。需要从外部连库调试时临时取消 ports 注释。
+
+services:
+  new-api:
+    image: handloong/new-api-ie:latest
+    container_name: new-api
+    restart: unless-stopped
+    command: --log-dir /app/logs
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+      - ./logs:/app/logs
+    environment:
+      # charset 必须支持中文，否则后端启动时会因 schema 校验失败直接 panic
+      - SQL_DSN=root:123456@tcp(mysql:3306)/new-api?parseTime=true&charset=utf8mb4
+      - REDIS_CONN_STRING=redis://:123456@redis:6379
+      - TZ=Asia/Shanghai
+      - ERROR_LOG_ENABLED=true
+      - BATCH_UPDATE_ENABLED=true
+      - NODE_NAME=new-api-node-1
+#      - LOG_SQL_DSN=root:123456@tcp(mysql:3306)/new-api-log?parseTime=true  # 日志单独建库时启用
+#      - SESSION_SECRET=random_string  # 多节点部署必填，单机可不设
+#      - STREAMING_TIMEOUT=300
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - new-api-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/status | grep -o '\"success\":\\s*true' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mysql:
+    image: mysql:8.2
+    container_name: new-api-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max_connections=500
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: new-api
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - new-api-network
+#    ports:
+#      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p123456"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: new-api-redis
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "123456"]
+    networks:
+      - new-api-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "123456", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  mysql_data:
+
+networks:
+  new-api-network:
+    driver: bridge
