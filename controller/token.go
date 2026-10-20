@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -314,15 +315,20 @@ func buildTokenUsageSubscriptions(userId int) []gin.H {
 		if sub == nil {
 			continue
 		}
+		available := sub.AmountTotal - sub.AmountUsed
+		// *_usd 字段是折算成站点展示口径的金额，客户端无需自行除 QuotaPerUnit 或乘汇率。
 		item := gin.H{
-			"plan_id":          sub.PlanId,
-			"plan_title":       "",
-			"amount_total":     sub.AmountTotal,
-			"amount_used":      sub.AmountUsed,
-			"amount_available": sub.AmountTotal - sub.AmountUsed,
-			"start_time":       sub.StartTime,
-			"end_time":         sub.EndTime,
-			"status":           sub.Status,
+			"plan_id":              sub.PlanId,
+			"plan_title":           "",
+			"amount_total":         sub.AmountTotal,
+			"amount_used":          sub.AmountUsed,
+			"amount_available":     available,
+			"amount_total_usd":     quotaToDisplayAmount(sub.AmountTotal),
+			"amount_used_usd":      quotaToDisplayAmount(sub.AmountUsed),
+			"amount_available_usd": quotaToDisplayAmount(available),
+			"start_time":           sub.StartTime,
+			"end_time":             sub.EndTime,
+			"status":               sub.Status,
 		}
 		if plan, planErr := model.GetSubscriptionPlanById(sub.PlanId); planErr == nil && plan != nil {
 			item["plan_title"] = plan.Title
@@ -330,6 +336,22 @@ func buildTokenUsageSubscriptions(userId int) []gin.H {
 		result = append(result, item)
 	}
 	return result
+}
+
+// quotaToDisplayAmount converts a quota value into the numeric amount of the site's
+// display type, following the *_usd convention of the billing endpoints: USD divides
+// by QuotaPerUnit, CNY applies the exchange rate, TOKENS stays raw. The result is
+// rounded to six decimals so JSON output carries no floating-point tail.
+func quotaToDisplayAmount(quota int64) float64 {
+	amount := float64(quota)
+	switch operation_setting.GetQuotaDisplayType() {
+	case operation_setting.QuotaDisplayTypeCNY:
+		amount = amount / common.QuotaPerUnit * operation_setting.USDExchangeRate
+	case operation_setting.QuotaDisplayTypeTokens:
+	default:
+		amount = amount / common.QuotaPerUnit
+	}
+	return math.Round(amount*1e6) / 1e6
 }
 
 func AddToken(c *gin.Context) {
