@@ -287,15 +287,18 @@ func GetTokenUsage(c *gin.Context) {
 		subscriptions, subscriptionAvailable := buildTokenUsageSubscriptions(token.UserId)
 		data["subscriptions"] = subscriptions
 		// user_quota 承载账号级额度：
-		//   total_available / total_used     钱包的原始 quota
+		//   total_available                  钱包 + 全部活跃订阅的原始 quota，即账号真正还能花的量
+		//   wallet_total_available           仅钱包的原始 quota
+		//   total_used                       已用额度
 		//   wallet_available_usd             钱包剩余额度折成金额
-		//   total_available_usd              钱包 + 全部活跃订阅，口径比 wallet_available_usd 大
-		// 订阅先于钱包扣费，只看 wallet_available_usd 会以为没钱。
+		//   total_available_usd              钱包 + 全部活跃订阅折成金额
+		// 订阅先于钱包扣费，钱包余额小不代表没钱，因此 total_available 必须含订阅。
 		data["user_quota"] = gin.H{
-			"total_available":      userQuota,
-			"total_used":           userUsedQuota,
-			"wallet_available_usd": quotaToDisplayAmount(int64(userQuota)),
-			"total_available_usd":  quotaToDisplayAmount(int64(userQuota) + subscriptionAvailable),
+			"total_available":        int64(userQuota) + subscriptionAvailable,
+			"wallet_total_available": userQuota,
+			"total_used":             userUsedQuota,
+			"wallet_available_usd":   quotaToDisplayAmount(int64(userQuota)),
+			"total_available_usd":    quotaToDisplayAmount(int64(userQuota) + subscriptionAvailable),
 		}
 	}
 

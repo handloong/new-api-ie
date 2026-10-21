@@ -20,6 +20,7 @@ import (
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
@@ -662,6 +663,10 @@ func TestGetTokenUsageFollowsTheUserQuotaSwitchAndIPWhitelist(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db := setupTokenControllerTestDB(t)
 			require.NoError(t, db.AutoMigrate(&model.User{}))
+			// Pin the display type so the *_usd fields are deterministic.
+			previousDisplayType := operation_setting.GetGeneralSetting().QuotaDisplayType
+			operation_setting.GetGeneralSetting().QuotaDisplayType = operation_setting.QuotaDisplayTypeUSD
+			t.Cleanup(func() { operation_setting.GetGeneralSetting().QuotaDisplayType = previousDisplayType })
 			// Initialize production column quoting for the token key lookup.
 			t.Setenv("LOG_SQL_DSN", "")
 			require.NoError(t, model.InitLogDB())
@@ -695,16 +700,58 @@ func TestGetTokenUsageFollowsTheUserQuotaSwitchAndIPWhitelist(t *testing.T) {
 			require.True(t, response.Code, recorder.Body.String())
 			fields := []string{"expires_at", "model_limits", "model_limits_enabled", "name", "object", "total_available", "total_granted", "total_used", "unlimited_quota"}
 			if tc.wantUserQuota {
-				fields = append(fields, "user_quota")
+				fields = append(fields, "subscriptions", "user_quota")
 			}
-			assert.Equal(t, fields, slices.Sorted(maps.Keys(response.Data)))
+			assert.Equal(t, slices.Sorted(slices.Values(fields)), slices.Sorted(maps.Keys(response.Data)))
 			assert.JSONEq(t, `100`, string(response.Data["total_available"]))
 			assert.JSONEq(t, `30`, string(response.Data["total_used"]))
 			if tc.wantUserQuota {
-				assert.JSONEq(t, `{"total_available":12345,"total_used":678}`, string(response.Data["user_quota"]))
+				assert.JSONEq(t, `{"total_available":12345,"wallet_total_available":12345,"total_used":678,"wallet_available_usd":0.02469,"total_available_usd":0.02469}`, string(response.Data["user_quota"]))
 			}
 		})
 	}
+}
+
+func TestGetTokenUsageTotalsCountActiveSubscriptions(t *testing.T) {
+	db := setupTokenControllerTestDB(t)
+	require.NoError(t, db.AutoMigrate(&model.User{}, &model.SubscriptionPlan{}, &model.UserSubscription{}))
+	t.Setenv("LOG_SQL_DSN", "")
+	require.NoError(t, model.InitLogDB())
+	previousDisplayType := operation_setting.GetGeneralSetting().QuotaDisplayType
+	operation_setting.GetGeneralSetting().QuotaDisplayType = operation_setting.QuotaDisplayTypeUSD
+	t.Cleanup(func() { operation_setting.GetGeneralSetting().QuotaDisplayType = previousDisplayType })
+
+	user := &model.User{Username: "quota-owner", Password: "placeholder", Role: common.RoleCommonUser, Status: common.UserStatusEnabled, Group: "default", Quota: 1000000, UsedQuota: 400000, AuthVersion: 1, AffCode: "quota-owner"}
+	require.NoError(t, db.Create(user).Error)
+	token := seedToken(t, db, user.Id, "usage-token", "usagekey1234")
+	require.NoError(t, db.Model(token).Updates(map[string]any{"allow_user_quota_query": true}).Error)
+
+	now := common.GetTimestamp()
+	for _, sub := range []*model.UserSubscription{
+		{UserId: user.Id, PlanId: 1, AmountTotal: 2000000, AmountUsed: 500000, StartTime: now - 3600, EndTime: now + 3600, Status: "active"},
+		{UserId: user.Id, PlanId: 1, AmountTotal: 300000, AmountUsed: 0, StartTime: now - 7200, EndTime: now - 1, Status: "active"},
+		{UserId: user.Id, PlanId: 1, AmountTotal: 400000, AmountUsed: 0, StartTime: now - 3600, EndTime: now + 3600, Status: "cancelled"},
+	} {
+		require.NoError(t, db.Create(sub).Error)
+	}
+
+	router := gin.New()
+	router.GET("/api/usage/token/", middleware.TokenAuthReadOnly(), GetTokenUsage)
+	request := httptest.NewRequest(http.MethodGet, "/api/usage/token/", nil)
+	request.Header.Set("Authorization", "Bearer sk-usagekey1234")
+	request.RemoteAddr = "203.0.113.7:4321"
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+	var response struct {
+		Code bool                       `json:"code"`
+		Data map[string]json.RawMessage `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	require.True(t, response.Code, recorder.Body.String())
+	// Only the active, unexpired subscription contributes: 2000000 - 500000 = 1500000.
+	assert.JSONEq(t, `{"total_available":2500000,"wallet_total_available":1000000,"total_used":400000,"wallet_available_usd":2,"total_available_usd":5}`, string(response.Data["user_quota"]))
 }
 
 func TestAPITokenAuditDatabaseMatrix(t *testing.T) {
