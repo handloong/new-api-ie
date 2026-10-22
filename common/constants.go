@@ -12,6 +12,10 @@ import (
 
 var StartTime = time.Now().Unix() // unit: second
 var Version = "v0.0.0"            // this hard coding will be replaced automatically when building, no need to manually change
+// BuildTime is an RFC 3339 UTC timestamp injected at build time through
+// -ldflags -X. It stays empty for local builds, which fall back to the VCS
+// commit time recorded in the Go build info.
+var BuildTime = ""
 var SystemName = "New API"
 var Footer = ""
 var Logo = ""
