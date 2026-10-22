@@ -8,6 +8,31 @@
 
 ---
 
+## v1.0.2-ie — 2026-10-22
+
+首个带 `-ie` 后缀的版本。内容为同步上游 16 个提交，无二开改动。
+
+**同步上游**
+
+- `0c2af9780` fix(relay): finish delivered Responses streams without false disconnect errors (#7956)
+- `7d8b91268` fix: upgrade Go to 1.26.10 for CVE-2026-111943 (#7942)
+- `4d36f2c52` chore(deps-dev): bump vitest from 4.1.10 to 5.0.4 in /web (#7838)
+- `eea05e010` chore(deps): bump github.com/klauspost/compress from 1.18.3 to 1.18.7 (#7931)
+- `206e0fa5c` fix(kling): bump plugin to 1.1.1
+- `590042682` fix(task): restrict query redirect credentials to allowed hosts
+- `120dbeafb` test(security): match the email code only as a whole number
+- `f9a0634f8` test(audit): read PostgreSQL index columns in key order
+- `55e2ae54d` fix(task): reprice each retry and reserve it before submission
+- `fc8f7d6fe` fix: fall back to CNY when DeepSeek USD wallet is zero (#7917)
+- `e2a0c4b16` fix(limiter): recover redis script after flush (#6486)
+- `a8535fac1` fix(kling): accept single API keys (#7897)
+- `783735607` fix(relaykit): keep tool calls when merging adjacent assistant messages for Claude (#7921)
+- `afe73b08f` feat: 支持阿里多模态向量化模型 qwen3-vl-embedding (#5179)
+- `9a42033a6` fix(task): 修复任务提交与轮询的请求头覆盖 (#7918)
+- `603a5ceb5` feat(dashboard): show cache usage alongside total tokens (#7773)
+
+---
+
 ## v1.0.1 — 2026-10-22
 
 首个正式编号版本，功能等价于 `rc.50`，另补 README 与更新日志。
