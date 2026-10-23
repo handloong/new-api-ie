@@ -8,6 +8,27 @@
 
 ---
 
+## v1.0.3-ie — 2026-10-23
+
+同步上游 12 个提交，无二开改动。合并无冲突，编译与回归测试通过。
+
+**同步上游**
+
+- `7fb6e57a5` fix(channels): preserve advanced custom body passthrough settings (#7971)
+- `e9d4d6353` feat(billing): bill OpenAI 12-hour prompt cache writes at their own price (#7965)
+- `d0b840e75` fix(relay): keep the client's JSON Schema property order
+- `d8e65613c` feat(web): copy model names from usage log details
+- `880211326` feat(task): let ordinary channels compete on shared plugin endpoints
+- `eb169e74d` feat(pricing): adjust synced upstream prices by the site exchange rate
+- `e2321a5a9` chore(web): sort locale keys
+- `db80ac8e0` fix(task): let task plugins validate their own requests
+- `dbe97beb9` feat(task): pass client request headers to task plugin drivers
+- `556517fa5` feat(task): accept multipart bodies on native plugin routes
+
+以上为最新 10 条，本次共 12 条；其余 2 条为 `94cc3ff09` fix(billing): bill Claude cache writes that arrive without a 5m/1h split、`7e6596728` fix(relay): stop cutting off slow clients during large stream events。
+
+---
+
 ## v1.0.2-ie — 2026-10-22
 
 首个带 `-ie` 后缀的版本。内容为同步上游 16 个提交，无二开改动。
