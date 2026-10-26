@@ -8,6 +8,27 @@
 
 ---
 
+## v1.0.5-ie — 2026-10-26
+
+同步上游 14 个提交，无二开改动。合并时 `README.md` 出现冲突，按约定以二开中文 README 为准保留，上游文档内容不并入；编译与回归测试通过。
+
+**同步上游**
+
+- `34003e9c2` test: stabilize channel affinity cache keys (#8009)
+- `0165fef98` fix(relaykit): preserve Gemini text alongside tool calls (#7998)
+- `4d962e464` fix(relaykit): preserve tool argument numbers in Claude responses (#7996)
+- `f1569d1ea` fix(pricing): classify dynamic per-request billing correctly (#8010)
+- `bc795cc11` fix:修复stop为非字符串和[]string的协议转换问题 (#7935)
+- `9823ebc7e` fix(billing): bill cache_creation_input_tokens reported in prompt_tokens_details (#7909)
+- `e835b1bfc` chore(deps): bump axios from 1.18.1 to 1.20.0 in /web (#7835)
+- `5c8032d70` chore(deps): bump react-i18next from 17.0.10 to 17.1.0 in /web (#7981)
+- `0b667ca47` chore(deps): bump i18next from 26.3.6 to 26.5.3 in /web (#7979)
+- `4105bd089` chore(deps): bump input-otp from 1.4.2 to 1.5.0 in /web (#7980)
+
+以上为最新 10 条，本次共 14 条；其余 4 条为 `b6b85cae5` chore(deps): bump react-resizable-panels from 4.12.2 to 4.14.6 in /web (#7982)、`1dafb19a4` fix(gemini): preserve top-level imageConfig in chat conversion、`0034b2491` fix(task): wait up to 72 hours before timing out tasks、`a40446041` chore(web): upgrade Bun to 1.4.4 and use bun check。
+
+---
+
 ## v1.0.4-ie — 2026-10-23
 
 同步上游 2 个提交，无二开改动。合并无冲突，编译与回归测试通过。
