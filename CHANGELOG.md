@@ -8,6 +8,25 @@
 
 ---
 
+## v1.0.7-ie — 2026-10-29
+
+同步上游 8 个提交，无二开改动。合并无冲突，编译与回归测试通过。
+
+**同步上游**
+
+- `e449cc700` feat: sample immediate task successes in model performance metrics (#8067)
+- `fcc241cdf` fix: start affinity fallback at the highest channel priority (#8078)
+- `b08ee86fe` fix(cloudflare): preserve embedding response data (#8041)
+- `26c488c44` fix(relay): allow Azure channels to opt in to Responses WebSocket (#8047) (#8075)
+- `55515dbae` fix(relay): terminate streams on exact bare done markers (#8074)
+- `49271d2d8` fix(aws): preserve safeguards in Bedrock Invoke requests (#8071)
+- `54788117d` fix: count completed non-stream relays after context cancellation (#7844)
+- `ad5611282` fix(relay): apply GPT-6 chat parameter rules to gpt-6.1-sol and gpt-6.1-terra (#8064)
+
+本次共 8 条。
+
+---
+
 ## v1.0.6-ie — 2026-10-28
 
 同步上游 1 个提交，无二开改动。合并无冲突，编译与回归测试通过。
