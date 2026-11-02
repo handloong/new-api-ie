@@ -8,6 +8,33 @@
 
 ---
 
+## v1.0.9-ie — 2026-11-02
+
+同步上游 24 个提交，无二开改动。合并无冲突，编译与回归测试通过。
+
+**同步上游**
+
+> 共 24 条，以下仅列前 10 条（按提交时间倒序）。
+
+- `70e6af642` perf: read and edit request JSON and base64 with moego (#8148)
+- `d0abbf6e0` feat(plugins): generate video with Gemini Omni on Vertex AI channels (#8142)
+- `ea343c4a8` fix(plugins): charge relayed streams even when the reserve or task insert fails (#8121)
+- `fe57cba42` fix(plugins): prefer Kling's returned price (list_price) for Kling 4.0 cash billing (#8125)
+- `1424ffdd4` fix(plugins): load plugins that declare their own /{key} address (#8119)
+- `8b253de42` fix(plugins): keep Kling 4.0 durations in range and map every video size (#8118)
+- `c59f6fd55` feat(plugins): serve task plugins at the vendors' own paths and answer as the vendors do (#8117)
+- `37d23dcc8` fix(profile): honor global sidebar visibility (#7429)
+- `77436271f` fix(deps): upgrade DOMPurify to 3.4.17 (#8116)
+- `883eeb87d` feat(plugins): warn about task models a plugin cannot charge
+
+其余 14 条为 Web/Electron 依赖升级（@codemirror/language、marked、@tanstack/react-query-devtools、
+knip、tailwind-merge、fast-uri、electron 41→42、undici、go-jose 4.1.6）以及 Turnstile 密钥保存、
+日志轮转后 gin access/recovery 仍写当前文件、登出时卸载已认证布局等修复。
+
+本次共 24 条。
+
+---
+
 ## v1.0.8-ie — 2026-10-30
 
 同步上游 1 个提交，无二开改动。合并无冲突，编译与回归测试通过。
