@@ -8,6 +8,24 @@
 
 ---
 
+## v1.0.10-ie — 2026-11-03
+
+同步上游 3 个提交，无二开改动。合并无冲突，编译与回归测试通过。
+
+**同步上游**
+
+> 共 3 条，以下全部列出（按提交时间倒序）。
+
+- `45746eee4` feat(relay): add opt-in HTTP/2 health checks (#8059)
+- `c046559bb` feat(plugins): bill gemini omni by the tokens vertex reports (#8153)
+- `651d5a213` fix(xai): preserve token details in stream usage conversion (#6420)
+
+其中 HTTP/2 健康检查新增 `common/constants.go` 开关、`common/init.go` 初始化、`service/http_client.go`
+传输层可选启用（默认关闭，沿用原 HTTP/1.1 行为），并新增 140 行传输层测试；vertex-ai 任务插件改为
+按 Vertex 上报的 token 明细计费 Gemini Omni；xAI 流式用量转换补回 token details。
+
+---
+
 ## v1.0.9-ie — 2026-11-02
 
 同步上游 24 个提交，无二开改动。合并无冲突，编译与回归测试通过。
