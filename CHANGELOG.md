@@ -8,6 +8,26 @@
 
 ---
 
+## v1.0.11-ie — 2026-11-04
+
+同步上游 5 个提交，无二开改动。合并无冲突，编译与回归测试通过。
+
+**同步上游**
+
+> 共 5 条，以下全部列出（按提交时间倒序）。
+
+- `ba5f73677` fix(gemini): bill embeddings from upstream usageMetadata (#8182)
+- `94b521664` feat(vertex): add per-channel v1beta1 endpoint switch (#8179)
+- `83b18fe6c` feat(channel): return created IDs with input mappings (#8164)
+- `52c173038` feat(gemini): add Argon fields and reasoning mappings (#8177)
+- `9b473a3fe` fix(twofa): restart the failure count after a lockout expires (#8172)
+
+其中 Gemini 嵌入改按上游 `usageMetadata` 计费；Vertex 渠道新增 v1beta1 端点开关（渠道设置项）；
+渠道创建接口返回按输入映射生成的 ID（新增 `controller/channel_create_test.go`）；
+Gemini DTO 补 Argon 字段与推理映射；两步验证在锁定过期后重置失败计数。
+
+---
+
 ## v1.0.10-ie — 2026-11-03
 
 同步上游 3 个提交，无二开改动。合并无冲突，编译与回归测试通过。
