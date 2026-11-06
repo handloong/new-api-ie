@@ -8,6 +8,26 @@
 
 ---
 
+## v1.0.13-ie — 2026-11-06
+
+同步上游 4 个提交，无二开改动。合并无冲突，编译与回归测试通过。
+
+**同步上游**
+
+> 共 4 条，以下全部列出（按提交时间倒序）。
+
+- `2de51a19e` fix(cache): 修复用户和令牌缓存的 Redis 跨槽错误 (#8218)
+- `72f3dc7da` fix(pricing): review model price changes before saving
+- `e3e74205f` fix(pricing): guide users through model pricing issues
+- `3374f251e` feat: forward image complexity and markup for gpt-image-2.6 (#8208)
+
+修正用户与令牌缓存的 Redis 跨槽（CROSSSLOT）错误，避免哈希键落在不同槽位导致读写失败；
+定价编辑改为先审阅差异再保存，新增 `price-change-diff.tsx`、`model-pricing-issue-alerts.tsx`
+与价格变更快照对比，模型倍率可视化编辑器同步重构；gpt-image-2.6 透传图片复杂度与加价字段
+（`relaykit/dto/openai_image.go`）。七套前端语言包均已补齐新增文案。
+
+---
+
 ## v1.0.12-ie — 2026-11-05
 
 同步上游 1 个提交，无二开改动。合并无冲突，编译与回归测试通过。
