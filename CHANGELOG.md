@@ -8,6 +8,38 @@
 
 ---
 
+## v1.0.14-ie — 2026-11-09
+
+同步上游 12 个提交，无二开改动。合并时 7 个前端语言包（`web/src/i18n/locales/*.json`）在文件末尾
+发生追加冲突，已按两侧并集解决：二开新增 23 个键、上游新增 11 个键全部保留，无重复键、无键丢失，
+七套语言键集合一致。编译与回归测试通过。
+
+**同步上游**
+
+> 共 12 条，以下列出前 10 条（按提交时间倒序）。
+
+- `8faf1d45e` fix(web): translate legal consent text on auth pages (#8254)
+- `48a6c87f9` fix(oauth): persist inviter when creating OAuth users (#8247)
+- `e8298df63` feat(channels): 高级自定义渠道增加 DeepSeek 搜索与抓取路径选项 (#8250)
+- `dd50ee0a5` feat(plugins): add gemini omni 1.2 flash and send every input image to vertex (#8228)
+- `a3fd673bb` feat(deepseek): 补全 Responses 工具历史缺失的 reasoning (#8162)
+- `9c2c370a6` fix(sqlite): keep the default SQLite settings when SQLITE_PATH is a plain path
+- `ada15c050` fix(channel): keep a manual channel disable when a request fails
+- `433830b4e` fix(channel): restore a multi-key channel when a key is enabled after all keys failed
+- `8c8940c99` fix(plugins): serve uploaded plugins at top-level /v1 paths (#8241)
+- `e03439033` refactor(aws): remove the unused api_key HTTP request path
+
+未列出的 2 条：`a5a465926` fix(vertex): cache service-account access tokens until they expire、
+`6fa80abc7` fix: clarify session cache actions and expose per-rule clearing。
+
+OAuth 注册现在持久化邀请人；渠道侧修复三处状态机问题（请求失败时保留人工禁用、全键失败后单键恢复启用、
+多键渠道重建）；SQLite 在 `SQLITE_PATH` 为普通路径时保留默认设置；Vertex 服务账号访问令牌缓存至过期；
+插件上传的静态资源改由顶层 `/v1` 路径提供；DeepSeek Responses 补全工具历史缺失的 reasoning；
+Gemini Omni 1.2 Flash 与 Vertex 逐图投递；高级自定义渠道新增 DeepSeek 搜索与抓取路径选项；
+AWS 移除未使用的 `api_key` 请求路径；登录/注册页法律条款文案接入 i18n。
+
+---
+
 ## v1.0.13-ie — 2026-11-06
 
 同步上游 4 个提交，无二开改动。合并无冲突，编译与回归测试通过。
