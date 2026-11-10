@@ -8,6 +8,23 @@
 
 ---
 
+## v1.0.15-ie — 2026-11-10
+
+同步上游 1 个提交，无二开改动。合并无冲突，编译与回归测试通过。
+
+**同步上游**
+
+> 共 1 条，以下全部列出。
+
+- `bd6bb5301` feat: support HOST env to set the listen address (#8269)
+
+新增 `HOST` 环境变量控制监听地址：`main.go` 改用 `net.JoinHostPort(host, port)` 组装
+`http.Server.Addr` 与 pprof 监听地址，未设置时行为与原先一致（仍监听所有网卡）；启动日志
+`common.LogStartupSuccess` 增加 `host` 参数，绑定非通配地址时直接打印该地址，回环地址显示
+`Local:`、其余显示 `Network:`。`.env.example` 补充 `HOST` 说明。
+
+---
+
 ## v1.0.14-ie — 2026-11-09
 
 同步上游 12 个提交，无二开改动。合并时 7 个前端语言包（`web/src/i18n/locales/*.json`）在文件末尾
